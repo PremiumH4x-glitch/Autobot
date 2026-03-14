@@ -78,6 +78,14 @@ def full_cyrillic_sanitize(message):
         result.append(CYRILLIC_MAP.get(ch, ch))
     return ''.join(result)
 
+def strip_headers(message):
+    """Remove # markdown headers that some filters block"""
+    lines = message.split('\n')
+    stripped = []
+    for line in lines:
+        stripped.append(re.sub(r'^#+\s*', '', line))
+    return '\n'.join(stripped)
+
 def get_channel_info(channel_id):
     """Get channel info including slowmode"""
     try:
@@ -116,12 +124,20 @@ def send_message(channel_id, channel_name, original_text, image_path=None):
     url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
     send_headers = {k: v for k, v in HEADERS.items() if k != "Content-Type"}
 
+    no_headers = strip_headers(original_text)
+    cyrillic_full = full_cyrillic_sanitize(original_text)
+    cyrillic_no_headers = full_cyrillic_sanitize(no_headers)
+
     # Build list of variants to try in order
     variants = [
-        (original_text, image_path, "Original"),
-        (full_cyrillic_sanitize(original_text), image_path, "Full Cyrillic"),
-        (full_cyrillic_sanitize(original_text), None, "Full Cyrillic, no image"),
-        (original_text, None, "No image"),
+        (original_text,        image_path, "Original"),
+        (no_headers,           image_path, "No # headers"),
+        (no_headers,           None,       "No # headers, no image"),
+        (cyrillic_full,        image_path, "Full Cyrillic"),
+        (cyrillic_no_headers,  image_path, "Full Cyrillic, no # headers"),
+        (cyrillic_no_headers,  None,       "Full Cyrillic, no # headers, no image"),
+        (cyrillic_full,        None,       "Full Cyrillic, no image"),
+        (original_text,        None,       "No image"),
     ]
 
     for msg_text, img, label in variants:
