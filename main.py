@@ -1,14 +1,9 @@
 import discord
 import os
 import asyncio
-from dotenv import load_dotenv
 
-load_dotenv()
-
-TOKEN = os.getenv('DISCORD_TOKEN')
-if not TOKEN:
-    print("ERROR: DISCORD_TOKEN not set in environment variables")
-    exit(1)
+# Direct token (no dotenv needed)
+TOKEN = "NzY0ODQxMzU4MTk5NjE5NTk1.G3Mx2w.ESWYFZss2oj9beQZxYW_xpL4hUOaKTwjkuuuJ4"
 
 # Channel IDs to send to
 CHANNEL_IDS = [
@@ -37,6 +32,7 @@ class SelfBot(discord.Client):
 
     async def on_ready(self):
         print(f'Logged in as {self.user}')
+        print(f'User ID: {self.user.id}')
         
         if not self.sent_messages:
             self.sent_messages = True
@@ -90,6 +86,7 @@ class SelfBot(discord.Client):
 
 def main():
     print("Starting Discord Self-Bot...")
+    print(f"Token: {TOKEN[:20]}...")
     print(f"Target channels: {CHANNEL_IDS}")
     bot = SelfBot()
     bot.run(TOKEN)
