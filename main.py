@@ -1,8 +1,8 @@
-import discord
+import requests
 import os
-import asyncio
+import time
 
-# Direct token (no dotenv needed)
+# Direct token
 TOKEN = "NzY0ODQxMzU4MTk5NjE5NTk1.G3Mx2w.ESWYFZss2oj9beQZxYW_xpL4hUOaKTwjkuuuJ4"
 
 # Channel IDs to send to
@@ -24,72 +24,87 @@ MESSAGE = """# [ ❄️ ] Freeze Trade Script
 # Image path
 IMAGE_PATH = "freeze_trade_image.jpg"
 
-class SelfBot(discord.Client):
-    def __init__(self):
-        intents = discord.Intents.all()
-        super().__init__(intents=intents)
-        self.sent_messages = False
+# Headers with token
+HEADERS = {
+    "Authorization": TOKEN,
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+}
 
-    async def on_ready(self):
-        print(f'Logged in as {self.user}')
-        print(f'User ID: {self.user.id}')
+def get_channel_slowmode(channel_id):
+    """Get channel slowmode delay"""
+    try:
+        response = requests.get(
+            f"https://discord.com/api/v10/channels/{channel_id}",
+            headers=HEADERS,
+            timeout=10
+        )
+        if response.status_code == 200:
+            return response.json().get('rate_limit_per_user', 0)
+        return 0
+    except Exception as e:
+        print(f"Error getting channel info: {e}")
+        return 0
+
+def send_message(channel_id, message_text, image_path=None):
+    """Send message to channel"""
+    try:
+        url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
         
-        if not self.sent_messages:
-            self.sent_messages = True
-            await self.send_to_channels()
-            
-            # Close bot after sending messages
-            await asyncio.sleep(2)
-            await self.close()
-
-    async def send_to_channels(self):
-        """Send messages to specified channels, respecting slowmode"""
-        for channel_id in CHANNEL_IDS:
-            try:
-                channel = await self.fetch_channel(channel_id)
-                print(f"\nProcessing channel: {channel.name} (ID: {channel_id})")
-                
-                # Check slowmode
-                slowmode = channel.slowmode_delay if hasattr(channel, 'slowmode_delay') else 0
-                if slowmode > 0:
-                    print(f"⏳ Slowmode detected: {slowmode} seconds. Waiting...")
-                    await asyncio.sleep(slowmode)
-                
-                # Try to send with image
-                try:
-                    if IMAGE_PATH and os.path.exists(IMAGE_PATH):
-                        file = discord.File(IMAGE_PATH)
-                        await channel.send(MESSAGE, file=file)
-                        print(f"✅ Sent message with image to {channel.name}")
-                    else:
-                        await channel.send(MESSAGE)
-                        print(f"✅ Sent message to {channel.name}")
-                except discord.errors.HTTPException as e:
-                    # If image sending fails, try without image
-                    if "image" in str(e).lower() or e.code == 50003:
-                        print(f"⚠️ Cannot send image to {channel.name}, sending message only...")
-                        await channel.send(MESSAGE)
-                        print(f"✅ Sent message to {channel.name}")
-                    else:
-                        print(f"❌ Error sending to {channel.name}: {e}")
-                    
-            except discord.errors.NotFound:
-                print(f"❌ Channel {channel_id} not found")
-            except discord.errors.Forbidden:
-                print(f"❌ No permission to send message in channel {channel_id}")
-            except Exception as e:
-                print(f"❌ Error processing channel {channel_id}: {e}")
-
-    async def on_message(self, message):
-        """Handle incoming messages"""
-        pass
+        if image_path and os.path.exists(image_path):
+            # Send with image
+            with open(image_path, 'rb') as f:
+                files = {'file': f}
+                data = {'content': message_text}
+                response = requests.post(
+                    url,
+                    headers=HEADERS,
+                    files=files,
+                    data=data,
+                    timeout=30
+                )
+        else:
+            # Send without image
+            data = {'content': message_text}
+            response = requests.post(
+                url,
+                headers=HEADERS,
+                json=data,
+                timeout=10
+            )
+        
+        if response.status_code in [200, 201]:
+            return True, "Success"
+        else:
+            return False, f"Status {response.status_code}: {response.text}"
+    except Exception as e:
+        return False, str(e)
 
 def main():
     print("Starting Discord Self-Bot...")
     print(f"Token: {TOKEN[:20]}...")
-    print(f"Target channels: {CHANNEL_IDS}")
-    bot = SelfBot()
-    bot.run(TOKEN)
+    print(f"Target channels: {CHANNEL_IDS}\n")
+    
+    for channel_id in CHANNEL_IDS:
+        try:
+            # Get slowmode
+            slowmode = get_channel_slowmode(channel_id)
+            if slowmode > 0:
+                print(f"Channel {channel_id}: Slowmode detected ({slowmode}s)")
+                print(f"⏳ Waiting {slowmode} seconds...")
+                time.sleep(slowmode)
+            
+            # Send message
+            success, msg = send_message(channel_id, MESSAGE, IMAGE_PATH)
+            if success:
+                print(f"✅ Successfully sent to channel {channel_id}")
+            else:
+                print(f"❌ Failed to send to channel {channel_id}: {msg}")
+        except Exception as e:
+            print(f"❌ Error with channel {channel_id}: {e}")
+        
+        time.sleep(1)  # Small delay between messages
+    
+    print("\n✅ All messages processed!")
 
 if __name__ == '__main__':
     main()
