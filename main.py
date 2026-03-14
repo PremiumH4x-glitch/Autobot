@@ -10,14 +10,24 @@ if not TOKEN:
     print("ERROR: DISCORD_TOKEN not set in environment variables")
     exit(1)
 
-# Server ID and message config - CUSTOMIZE THESE
-TARGET_SERVERS = {
-    # 'server_id': 'message_text'
-    # Example: 1234567890: 'Hello Server 1!'
-}
+# Channel IDs to send to
+CHANNEL_IDS = [
+    1406319942701158531,
+    1431010689635586128,
+    1431010690835156992,
+    1435876872775929916,
+    1478627273363034215
+]
 
-# Image path - CUSTOMIZE THIS
-IMAGE_PATH = None  # Set to image file path if you want to attach an image
+# Message to send
+MESSAGE = """# [ ❄️ ] Freeze Trade Script
+——————————————————
+**📥 Status: Free / Available**
+🚀 Version: Latest Update
+# DM me to get the script for free! 💬"""
+
+# Image path
+IMAGE_PATH = "freeze_trade_image.jpg"
 
 class SelfBot(discord.Client):
     def __init__(self):
@@ -30,53 +40,57 @@ class SelfBot(discord.Client):
         
         if not self.sent_messages:
             self.sent_messages = True
-            await self.send_targeted_messages()
+            await self.send_to_channels()
             
             # Close bot after sending messages
             await asyncio.sleep(2)
             await self.close()
 
-    async def send_targeted_messages(self):
-        """Send messages to specified servers"""
-        for guild_id, message_text in TARGET_SERVERS.items():
+    async def send_to_channels(self):
+        """Send messages to specified channels, respecting slowmode"""
+        for channel_id in CHANNEL_IDS:
             try:
-                guild = self.get_guild(guild_id)
-                if guild is None:
-                    print(f"Guild {guild_id} not found")
-                    continue
+                channel = await self.fetch_channel(channel_id)
+                print(f"\nProcessing channel: {channel.name} (ID: {channel_id})")
                 
-                # Get first text channel in the guild
-                channel = None
-                for ch in guild.text_channels:
-                    if ch.permissions_for(guild.me).send_messages:
-                        channel = ch
-                        break
+                # Check slowmode
+                slowmode = channel.slowmode_delay if hasattr(channel, 'slowmode_delay') else 0
+                if slowmode > 0:
+                    print(f"⏳ Slowmode detected: {slowmode} seconds. Waiting...")
+                    await asyncio.sleep(slowmode)
                 
-                if channel is None:
-                    print(f"No accessible text channel in guild {guild_id}")
-                    continue
-                
-                # Send message with optional image
-                if IMAGE_PATH and os.path.exists(IMAGE_PATH):
-                    file = discord.File(IMAGE_PATH)
-                    await channel.send(message_text, file=file)
-                    print(f"Sent message with image to {guild.name} (#{channel.name})")
-                else:
-                    await channel.send(message_text)
-                    print(f"Sent message to {guild.name} (#{channel.name})")
+                # Try to send with image
+                try:
+                    if IMAGE_PATH and os.path.exists(IMAGE_PATH):
+                        file = discord.File(IMAGE_PATH)
+                        await channel.send(MESSAGE, file=file)
+                        print(f"✅ Sent message with image to {channel.name}")
+                    else:
+                        await channel.send(MESSAGE)
+                        print(f"✅ Sent message to {channel.name}")
+                except discord.errors.HTTPException as e:
+                    # If image sending fails, try without image
+                    if "image" in str(e).lower() or e.code == 50003:
+                        print(f"⚠️ Cannot send image to {channel.name}, sending message only...")
+                        await channel.send(MESSAGE)
+                        print(f"✅ Sent message to {channel.name}")
+                    else:
+                        print(f"❌ Error sending to {channel.name}: {e}")
                     
+            except discord.errors.NotFound:
+                print(f"❌ Channel {channel_id} not found")
+            except discord.errors.Forbidden:
+                print(f"❌ No permission to send message in channel {channel_id}")
             except Exception as e:
-                print(f"Error sending message to guild {guild_id}: {e}")
+                print(f"❌ Error processing channel {channel_id}: {e}")
 
     async def on_message(self, message):
-        """Handle incoming messages - self-bots typically don't respond to messages"""
+        """Handle incoming messages"""
         pass
 
 def main():
-    if not TARGET_SERVERS:
-        print("WARNING: TARGET_SERVERS is empty. Configure your servers and messages in the script.")
-        print("Format: TARGET_SERVERS = { guild_id: 'message text' }")
-    
+    print("Starting Discord Self-Bot...")
+    print(f"Target channels: {CHANNEL_IDS}")
     bot = SelfBot()
     bot.run(TOKEN)
 
