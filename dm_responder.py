@@ -14,25 +14,14 @@ HEADERS = {
 
 session = requests.Session(impersonate="chrome120")
 
-def send_dm(channel_id, text):
-    payload = {
-        "content": text,
-        "nonce": str((int(time.time() * 1000) - 1420070400000) << 22),
-        "tts": False
-    }
-    try:
-        # DM responder usually doesn't send images, so we use json= to avoid multipart errors
-        session.post(f"https://discord.com/api/v10/channels/{channel_id}/messages", 
-                     headers=HEADERS, json=payload, timeout=15)
-    except: pass
-
 def run_dm_responder():
     print(f"⚡ DM RESPONDER: FAST MODE")
     while True:
         try:
+            # Polling Discord for DM channels
             r = session.get("https://discord.com/api/v10/users/@me/channels", headers=HEADERS)
             if r.status_code == 200:
-                # Add your logic to check for unread messages here
+                # Add reply logic here if needed
                 pass
         except: pass
-        time.sleep(5) # Checks for DMs every 5 seconds
+        time.sleep(2) # Faster polling
