@@ -1,27 +1,23 @@
 import time
 import os
-import random
-import base64
-import json
-from curl_cffi import requests
+import requests
 
 TOKEN = os.getenv("DISCORD_TOKEN")
-HEADERS = {
-    "Authorization": TOKEN,
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-    "Accept": "*/*",
-}
-
-session = requests.Session(impersonate="chrome120")
 
 def run_dm_responder():
-    print(f"⚡ DM RESPONDER: FAST MODE")
+    print("⚡ DM RESPONDER ONLINE")
+    headers = {
+        "Authorization": TOKEN,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    }
+    
     while True:
         try:
-            # Polling Discord for DM channels
-            r = session.get("https://discord.com/api/v10/users/@me/channels", headers=HEADERS)
+            # Poll for new DM channels
+            r = requests.get("https://discord.com/api/v10/users/@me/channels", headers=headers, timeout=10)
             if r.status_code == 200:
-                # Add reply logic here if needed
+                # Add your reply logic here
                 pass
-        except: pass
-        time.sleep(2) # Faster polling
+        except:
+            pass
+        time.sleep(5) # Check every 5 seconds
