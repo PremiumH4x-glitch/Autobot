@@ -5,7 +5,7 @@ import re
 import json
 
 # Direct token
-TOKEN = "NzY0ODQxMzU4MTk5NjE5NTk1.G3Mx2w.ESWYFZss2oj9beQZxYW_xpL4hUOaKTwjkuuuJ4"
+TOKEN = "NzY0ODQxMzU4MTk5NjE5NTk1.GtyaR2.pg2Ok_Df8F_aQJeX7Tb6zMVFtIlnJDVv8sCCBM"
 
 # Channel IDs to send to
 CHANNEL_IDS = [
