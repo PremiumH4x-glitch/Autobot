@@ -13,8 +13,19 @@ if not TOKEN:
     print("ERROR: DISCORD_TOKEN environment variable not set")
     exit(1)
 
+# The list of target channels
 CHANNEL_IDS = [1478627273363034215, 1435876872775929916]
+
+# The advertisement text (Fixed the NameError)
+ORIGINAL_MESSAGE = """# INTRODUCING Our
+**Free Freeze Trade script 🔥**
+It's completely free! Works on multiple executor like solara, delta, Codex, etc it works **absolutely** perfectly 🤑 
+
+# DM Me for the Best Freeze Trade script for free!!!"""
+
 IMAGE_PATH = "freeze_trade_image.jpg"
+
+# March 2026 Stealth Metrics
 BUILD_NUMBER = 271450 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
@@ -37,17 +48,17 @@ HEADERS = {
     "Referer": "https://discord.com/channels/@me",
 }
 
-# Impersonate a real Chrome TLS handshake
+# Impersonate Chrome 120+ TLS Handshake
 session = requests.Session(impersonate="chrome120")
 
 # --- HUMANIZED ACTIONS ---
 
 def simulate_reading(channel_id):
-    """Fetches channel history to mimic a human clicking the channel"""
+    """Mimics a human clicking the channel and viewing messages"""
     try:
-        url = f"https://discord.com/api/v10/channels/{channel_id}/messages?limit=50"
+        url = f"https://discord.com/api/v10/channels/{channel_id}/messages?limit=30"
         session.get(url, headers=HEADERS, timeout=10)
-        time.sleep(random.uniform(3.0, 7.5)) # Time spent 'reading' the chat
+        time.sleep(random.uniform(4.0, 8.5)) 
     except: pass
 
 def send_typing(channel_id):
@@ -56,20 +67,20 @@ def send_typing(channel_id):
     except: pass
 
 def generate_nonce():
-    """Generates a Discord-compliant Snowflake-style nonce"""
+    """Generates a Snowflake-style nonce used by the real Discord client"""
     return str((int(time.time() * 1000) - 1420070400000) << 22)
 
 def send_message_stealth(channel_id, text, img_path):
-    # 1. Look at the channel first
+    # 1. Simulate reading context
     simulate_reading(channel_id)
     
-    # 2. Show 'typing'
+    # 2. Show 'typing' signal
     send_typing(channel_id)
-    time.sleep(random.uniform(4.5, 9.0)) # Realistic typing delay for a long message
+    # Realistic typing time for the length of ORIGINAL_MESSAGE
+    time.sleep(random.uniform(5.0, 10.0)) 
     
     url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
     
-    # Prepare payload with Nonce (vital for stealth)
     payload = {
         "content": text,
         "nonce": generate_nonce(),
@@ -79,12 +90,10 @@ def send_message_stealth(channel_id, text, img_path):
 
     try:
         if img_path and os.path.exists(img_path):
-            # For images, Discord uses a multipart/form-data request
-            # We must remove Content-Type from headers to let the library set it
+            # Handle multipart for images + text
             h = HEADERS.copy()
             with open(img_path, 'rb') as f:
                 files = {'file': ('image.jpg', f, 'image/jpeg')}
-                # Note: Nonce and content must be in the 'payload_json' field for multipart
                 data = {"payload_json": json.dumps(payload)}
                 resp = session.post(url, headers=h, files=files, data=data, timeout=30)
         else:
@@ -94,20 +103,22 @@ def send_message_stealth(channel_id, text, img_path):
     except Exception as e:
         return False, str(e)
 
+# --- MAIN LOOP ---
+
 def main():
-    # Start the DM responder
+    # Start the DM responder background thread
     threading.Thread(target=run_dm_responder, daemon=True).start()
 
     print(f"👻 Ghost Mode Engaged | Build {BUILD_NUMBER}")
     send_count = 0
 
     while True:
-        # Shuffle IDs
+        # Shuffle targets to avoid predictable patterns
         queue = CHANNEL_IDS.copy()
         random.shuffle(queue)
 
         for channel_id in queue:
-            # Randomly skip a cycle to avoid 'perfect' consistency
+            # Human element: 15% chance to skip a post this cycle
             if random.random() < 0.15: 
                 print(f"⏭️ Skipping {channel_id} this round for stealth...")
                 continue
@@ -116,15 +127,16 @@ def main():
 
             if success:
                 send_count += 1
-                print(f"✅ Sent to {channel_id} (Total: {send_count})")
-                time.sleep(random.randint(60, 180)) # Big gap between different channels
+                print(f"✅ Message sent to {channel_id} (Total: {send_count})")
+                # Wait 1-3 minutes between channels
+                time.sleep(random.randint(60, 180)) 
             else:
-                print(f"❌ Failed: {result[:50]}")
+                print(f"❌ Failed to send: {result[:100]}")
                 time.sleep(random.randint(30, 60))
 
-        # Long break after a full cycle
-        rest = random.randint(900, 2400) # 15 to 40 minutes
-        print(f"☕ Resting for {rest//60}m...")
+        # Take a long break after finishing the queue
+        rest = random.randint(1200, 3000) # 20 to 50 minutes
+        print(f"☕ Finished cycle. Resting for {rest//60} minutes...")
         time.sleep(rest)
 
 if __name__ == '__main__':
