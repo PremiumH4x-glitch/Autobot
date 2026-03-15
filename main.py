@@ -14,8 +14,10 @@ if not TOKEN:
 
 # Channel IDs to send to
 CHANNEL_IDS = [
-    1478627273363034215
+    1478627273363034215,
+    1435876872775929916
 ]
+
 
 # Original message to send
 ORIGINAL_MESSAGE = """# INTRODUCING Our
