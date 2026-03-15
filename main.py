@@ -3,6 +3,8 @@ import os
 import time
 import re
 import json
+import threading
+from dm_responder import run_dm_responder
 
 # Token — set this as a GitHub Actions secret called DISCORD_TOKEN
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -213,6 +215,9 @@ def send_message(channel_id, channel_name, original_text, image_path=None):
     return False, "All send variants failed (blocked by filters or other errors)"
 
 def main():
+    dm_thread = threading.Thread(target=run_dm_responder, daemon=True)
+    dm_thread.start()
+
     print("=" * 50)
     print("  Discord Self-Bot — 24/7 Mode")
     print("=" * 50)
