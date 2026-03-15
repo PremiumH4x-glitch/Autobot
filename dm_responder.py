@@ -13,11 +13,7 @@ def run_dm_responder():
     
     while True:
         try:
-            # Poll for new DM channels
-            r = requests.get("https://discord.com/api/v10/users/@me/channels", headers=headers, timeout=10)
-            if r.status_code == 200:
-                # Add your reply logic here
-                pass
+            requests.get("https://discord.com/api/v10/users/@me/channels", headers=headers, timeout=10)
         except:
             pass
-        time.sleep(5) # Check every 5 seconds
+        time.sleep(5) 
