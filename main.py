@@ -4,8 +4,11 @@ import time
 import re
 import json
 
-# Token — reads from environment variable (GitHub Actions secret) or falls back to hardcoded
-TOKEN = os.getenv("DISCORD_TOKEN", "NzY0ODQxMzU4MTk5NjE5NTk1.GtyaR2.pg2Ok_Df8F_aQJeX7Tb6zMVFtIlnJDVv8sCCBM")
+# Token — set this as a GitHub Actions secret called DISCORD_TOKEN
+TOKEN = os.getenv("DISCORD_TOKEN")
+if not TOKEN:
+    print("ERROR: DISCORD_TOKEN environment variable not set")
+    exit(1)
 
 # Channel IDs to send to
 CHANNEL_IDS = [
