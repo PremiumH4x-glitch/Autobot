@@ -4,8 +4,8 @@ import time
 import re
 import json
 
-# Direct token
-TOKEN = "NzY0ODQxMzU4MTk5NjE5NTk1.GtyaR2.pg2Ok_Df8F_aQJeX7Tb6zMVFtIlnJDVv8sCCBM"
+# Token — reads from environment variable (GitHub Actions secret) or falls back to hardcoded
+TOKEN = os.getenv("DISCORD_TOKEN", "NzY0ODQxMzU4MTk5NjE5NTk1.GtyaR2.pg2Ok_Df8F_aQJeX7Tb6zMVFtIlnJDVv8sCCBM")
 
 # Channel IDs to send to
 CHANNEL_IDS = [

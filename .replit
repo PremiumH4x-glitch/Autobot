@@ -11,8 +11,8 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["python", "main.py"]
-deploymentTarget = "vm"
+run = ["sh", "-c", "python3 main.py"]
+deploymentTarget = "cloudrun"
 
 [agent]
 expertMode = true

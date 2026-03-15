@@ -1,0 +1,28 @@
+name: Discord Self-Bot 24/7
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Restart every 6 hours
+  workflow_dispatch:        # Allow manual start from GitHub
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350    # Run for ~5h 50min, then cron restarts it
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        run: python main.py
