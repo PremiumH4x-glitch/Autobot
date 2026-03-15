@@ -211,42 +211,42 @@ def send_message(channel_id, channel_name, original_text, image_path=None):
 
 def main():
     print("=" * 50)
-    print("  Discord Self-Bot — Starting")
+    print("  Discord Self-Bot — 24/7 Mode")
     print("=" * 50)
-    print(f"  Channels to send to: {len(CHANNEL_IDS)}")
-    print(f"  Image: {'YES' if os.path.exists(IMAGE_PATH) else 'NOT FOUND'}\n")
+    print(f"  Channels: {len(CHANNEL_IDS)}")
+    print(f"  Image: {'YES' if os.path.exists(IMAGE_PATH) else 'NOT FOUND'}")
+    print(f"  Running forever — press Ctrl+C to stop\n")
 
-    results = []
+    send_count = 0
 
-    for channel_id in CHANNEL_IDS:
-        print(f"\n📡 Processing channel: {channel_id}")
-        info = get_channel_info(channel_id)
-        name = info['name']
-        slowmode = info['slowmode']
+    while True:
+        for channel_id in CHANNEL_IDS:
+            print(f"\n📡 Channel: {channel_id}")
+            info = get_channel_info(channel_id)
+            name = info['name']
+            slowmode = info['slowmode']
 
-        print(f"   Name: #{name}")
+            print(f"   Name: #{name}")
 
-        if slowmode > 0:
-            print(f"   ⏳ Slowmode: {slowmode}s — waiting...")
-            time.sleep(slowmode)
+            if slowmode > 0:
+                print(f"   ⏳ Slowmode: {slowmode}s — waiting...")
+                time.sleep(slowmode)
 
-        success, result_msg = send_message(channel_id, name, ORIGINAL_MESSAGE, IMAGE_PATH)
+            img = IMAGE_PATH if os.path.exists(IMAGE_PATH) else None
+            success, result_msg = send_message(channel_id, name, ORIGINAL_MESSAGE, img)
 
-        if success:
-            print(f"   ✅ Sent successfully to #{name}")
-            results.append((channel_id, name, "✅ Success"))
-        else:
-            print(f"   ❌ Failed: {result_msg}")
-            results.append((channel_id, name, f"❌ {result_msg}"))
+            if success:
+                send_count += 1
+                print(f"   ✅ Sent! (total sent: {send_count})")
+            else:
+                print(f"   ❌ Failed: {result_msg}")
+                if "401" in result_msg:
+                    print("   🔑 Token issue — waiting 30s before retry...")
+                    time.sleep(30)
+                else:
+                    time.sleep(5)
 
-        time.sleep(1.5)
-
-    print("\n" + "=" * 50)
-    print("  FINAL RESULTS")
-    print("=" * 50)
-    for cid, name, status in results:
-        print(f"  {status} — #{name} ({cid})")
-    print("=" * 50)
+        time.sleep(2)
 
 if __name__ == '__main__':
     main()
