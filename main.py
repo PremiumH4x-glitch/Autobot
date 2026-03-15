@@ -32,37 +32,29 @@ HEADERS = {
     "User-Agent": USER_AGENT,
     "X-Super-Properties": get_super_properties(),
     "Accept": "*/*",
-    "X-Discord-Locale": "en-US",
 }
 
 session = requests.Session(impersonate="chrome120")
-
-def send_typing(channel_id):
-    url = f"https://discord.com/api/v10/channels/{channel_id}/typing"
-    try: session.post(url, headers=HEADERS, timeout=5)
-    except: pass
 
 def generate_nonce():
     return str((int(time.time() * 1000) - 1420070400000) << 22)
 
 def send_message_stealth(channel_id, text, img_path):
-    send_typing(channel_id)
-    time.sleep(random.uniform(1.5, 3.0)) # Shorter typing delay
-    
     url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
-    payload = {"content": text, "nonce": generate_nonce(), "tts": False, "flags": 0}
+    payload = {"content": text, "nonce": generate_nonce(), "tts": False}
 
     try:
         if img_path and os.path.exists(img_path):
             with open(img_path, 'rb') as f:
                 image_data = f.read()
-            h = HEADERS.copy()
+            # MUST use multipart for images in curl_cffi
             multipart_data = {
                 "payload_json": json.dumps(payload),
                 "file": ("image.jpg", image_data, "image/jpeg")
             }
-            resp = session.post(url, headers=h, multipart=multipart_data, timeout=30)
+            resp = session.post(url, headers=HEADERS, multipart=multipart_data, timeout=30)
         else:
+            # For text-only, JSON is safer
             resp = session.post(url, headers=HEADERS, json=payload, timeout=15)
         return resp.status_code in (200, 201), resp.text
     except Exception as e:
@@ -70,21 +62,19 @@ def send_message_stealth(channel_id, text, img_path):
 
 def main():
     threading.Thread(target=run_dm_responder, daemon=True).start()
-    print(f"🚀 High-Speed Mode Engaged | Build {BUILD_NUMBER}")
+    print(f"🚀 MAX SPEED | Build {BUILD_NUMBER}")
     
     while True:
-        queue = CHANNEL_IDS.copy()
-        random.shuffle(queue)
-        for channel_id in queue:
+        for channel_id in CHANNEL_IDS:
             success, result = send_message_stealth(channel_id, ORIGINAL_MESSAGE, IMAGE_PATH)
             if success:
-                print(f"✅ Sent to {channel_id}")
-                time.sleep(random.randint(5, 15)) # Minimal delay between channels
+                print(f"✅ Sent -> {channel_id}")
             else:
-                print(f"❌ Error: {result[:50]}")
+                print(f"❌ Error -> {result[:50]}")
+            time.sleep(2) # Tiny 2s delay to prevent instant 429 rate limit
         
-        print("🔄 Cycle finished. Restarting immediately...")
-        time.sleep(10) # 10 second breather before next full loop
+        print("🔄 Cycle Restarting...")
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()
