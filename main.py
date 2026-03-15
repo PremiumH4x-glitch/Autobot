@@ -13,10 +13,10 @@ if not TOKEN:
     print("ERROR: DISCORD_TOKEN environment variable not set")
     exit(1)
 
-# The list of target channels
+# Target Channel IDs
 CHANNEL_IDS = [1478627273363034215, 1435876872775929916]
 
-# The advertisement text (Fixed the NameError)
+# The advertisement text
 ORIGINAL_MESSAGE = """# INTRODUCING Our
 **Free Freeze Trade script 🔥**
 It's completely free! Works on multiple executor like solara, delta, Codex, etc it works **absolutely** perfectly 🤑 
@@ -38,6 +38,7 @@ def get_super_properties():
     }
     return base64.b64encode(json.dumps(props).encode()).decode()
 
+# Note: We keep HEADERS global but copy/modify them for multipart requests
 HEADERS = {
     "Authorization": TOKEN,
     "User-Agent": USER_AGENT,
@@ -48,7 +49,7 @@ HEADERS = {
     "Referer": "https://discord.com/channels/@me",
 }
 
-# Impersonate Chrome 120+ TLS Handshake
+# Impersonate Chrome 120+ TLS Handshake (Vital for bypass)
 session = requests.Session(impersonate="chrome120")
 
 # --- HUMANIZED ACTIONS ---
@@ -90,12 +91,21 @@ def send_message_stealth(channel_id, text, img_path):
 
     try:
         if img_path and os.path.exists(img_path):
-            # Handle multipart for images + text
-            h = HEADERS.copy()
+            # FIXED: curl_cffi uses 'multipart' instead of 'files'
             with open(img_path, 'rb') as f:
-                files = {'file': ('image.jpg', f, 'image/jpeg')}
-                data = {"payload_json": json.dumps(payload)}
-                resp = session.post(url, headers=h, files=files, data=data, timeout=30)
+                image_data = f.read()
+            
+            # For multipart, we must NOT set Content-Type in HEADERS manually
+            h = HEADERS.copy()
+            if "Content-Type" in h:
+                del h["Content-Type"]
+
+            multipart_data = {
+                "payload_json": json.dumps(payload),
+                "file": ("image.jpg", image_data, "image/jpeg")
+            }
+            
+            resp = session.post(url, headers=h, multipart=multipart_data, timeout=30)
         else:
             resp = session.post(url, headers=HEADERS, json=payload, timeout=15)
             
