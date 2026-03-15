@@ -9,19 +9,15 @@ TOKEN = "NzY0ODQxMzU4MTk5NjE5NTk1.G3Mx2w.ESWYFZss2oj9beQZxYW_xpL4hUOaKTwjkuuuJ4"
 
 # Channel IDs to send to
 CHANNEL_IDS = [
-    1406319942701158531,
-    1431010689635586128,
-    1431010690835156992,
-    1435876872775929916,
     1478627273363034215
 ]
 
 # Original message to send
-ORIGINAL_MESSAGE = """# [ ❄️ ] Freeze Trade Script
-——————————————————
-**📥 Status: Free / Available**
-🚀 Version: Latest Update
-# DM me to get the script for free! 💬"""
+ORIGINAL_MESSAGE = """# INTRODUCING Our
+**Free Freeze Trade script 🔥**
+It's completely free! Works on multiple executor like solara, delta, Codex, etc it works **absolutely** perfectly 🤑 
+
+# DM Me for the Best Freeze Trade script for free!!!"""
 
 # Image path
 IMAGE_PATH = "freeze_trade_image.jpg"
