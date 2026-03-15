@@ -47,15 +47,17 @@ def send_message_stealth(channel_id, text, img_path):
         if img_path and os.path.exists(img_path):
             with open(img_path, 'rb') as f:
                 image_data = f.read()
-            # MUST use multipart for images in curl_cffi
-            multipart_data = {
-                "payload_json": json.dumps(payload),
-                "file": ("image.jpg", image_data, "image/jpeg")
-            }
+            
+            # FIXED: curl_cffi requires a list of tuples for multipart, not a dict
+            multipart_data = [
+                ("payload_json", (None, json.dumps(payload), "application/json")),
+                ("file", ("image.jpg", image_data, "image/jpeg"))
+            ]
+            
             resp = session.post(url, headers=HEADERS, multipart=multipart_data, timeout=30)
         else:
-            # For text-only, JSON is safer
             resp = session.post(url, headers=HEADERS, json=payload, timeout=15)
+        
         return resp.status_code in (200, 201), resp.text
     except Exception as e:
         return False, str(e)
@@ -70,11 +72,11 @@ def main():
             if success:
                 print(f"✅ Sent -> {channel_id}")
             else:
-                print(f"❌ Error -> {result[:50]}")
-            time.sleep(2) # Tiny 2s delay to prevent instant 429 rate limit
+                print(f"❌ Error -> {result[:100]}")
+            # Minimal 1s pause to avoid immediate Discord rate limits
+            time.sleep(1) 
         
         print("🔄 Cycle Restarting...")
-        time.sleep(1)
 
 if __name__ == '__main__':
     main()
